@@ -74,7 +74,6 @@ class Moves:
                 #En principe le jeu s'arrete tout seul
         #La position est donc dans les pieces_of_cheese
         #On va donc y aller, on renvoit la position target
-        print(self.routingTable)
         return pos
 
 
