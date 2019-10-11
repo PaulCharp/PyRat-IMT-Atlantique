@@ -1,1 +1,132 @@
 #BruteForce Antoine 
+import random
+import numpy as np
+import heapq
+
+MOVE_DOWN = 'D'
+MOVE_LEFT = 'L'
+MOVE_RIGHT = 'R'
+MOVE_UP = 'U'
+
+
+global chemin
+chemin=[]
+
+
+def djikstra(maze_map,initial):
+    """
+    renvois un couple (distance, table de routage)
+    """
+    route={initial:[0,None]}#table de routage
+    aVisiter=[(0,initial)]#pile
+    visiter=[]
+    while(aVisiter!=[]):#tant que l'algorithme n'est pas fini
+            neud=heapq.heappop(aVisiter)[1]
+
+            voisin=maze_map[neud]#on cocmdnsidére touts les voisins
+            for (x,y) in voisin:
+                longueur=route[neud][0]+voisin[(x,y)]#longueur de la route passant par le sommet précédent
+                if not((x,y) in route) or longueur<route[(x,y)][0]:#si rien dans la table de routage ou le chemin déja trouvé est plus grand que le nouveau, on change le chemin
+                    route[(x,y)]=[longueur,neud]
+
+
+                if not((x,y) in visiter) and (not("cheese" in route)):#si le voisin n'a jamais été visiter et on l'ajoute dans le tas
+                    heapq.heappush(aVisiter,(longueur,(x,y)))
+                    visiter.append((x,y))
+
+    return route
+
+
+def deplacer(player_location,location):
+
+    diff=tuple(np.subtract(location, player_location))
+    if diff==(-1,0):
+        return MOVE_LEFT
+    elif diff==(1,0):
+        return 'R'
+    elif diff==(0,-1):
+        return 'D'
+    elif diff==(0,1):
+        return 'U'
+    elif diff==(0,0):
+        return 'U'
+
+def traiter(routage,pieces_of_cheese,initial):
+    listeDistance=[0]
+    listeChemin=['U']
+
+    for (x,y) in pieces_of_cheese:
+        listeDistance.append(routage[(x,y)][0])
+        neud=(x,y)
+        chemin_actuel=[]
+
+        while(neud!=initial):
+                newNeud=routage[neud][1]
+                chemin_actuel.append(deplacer(newNeud,neud))
+                neud=newNeud
+        listeChemin.append(chemin_actuel)
+
+
+    return listeDistance,listeChemin
+
+def bruteforce(restant,sommet,chemin,distance,graphe,best,bestChemin):
+
+    """restant -> liste des sommets restants à visiter
+    sommet -> sommet ou l'on est pour l'instant
+    chemin -> chemin que l'on à parcouru pour l'instant
+    distance -> distance entre le point actuel et l'origine
+    graphe -> métagraphe"""
+    if restant==[]:
+        if distance<best:
+
+            return (distance,chemin)
+        else:
+
+            return (best,bestChemin)
+
+    for i,n in enumerate(restant):
+
+        distance_sommet_n=graphe[sommet][n]
+        newDistance=distance_sommet_n+distance
+        newRestant=restant.copy()
+        newRestant.pop(i)
+        if newDistance<best:#backtracking
+            best,bestChemin=bruteforce(newRestant,n,chemin+[n],newDistance,graphe,best,bestChemin)
+    return (best,bestChemin)
+
+
+def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_location, pieces_of_cheese, time_allowed) :
+    global chemin
+    liste=[]
+    listeChemin=[]
+    routage=djikstra(maze_map,player_location)
+    listeDistance,chemin=traiter(routage,pieces_of_cheese,player_location)
+    liste.append(listeDistance)
+    listeChemin.append(chemin)
+    for location in pieces_of_cheese:
+        routage=djikstra(maze_map,location)
+        listeDistance,chemin=traiter(routage,pieces_of_cheese,location)
+        liste.append(listeDistance)
+        listeChemin.append(chemin)
+
+
+    indiceChemin=bruteforce([i+1 for i in range(len(pieces_of_cheese))],0,[],0,liste,np.inf,None)[1]
+    sommetPasser=0
+    chemin=[]
+    for indice in indiceChemin:
+
+        chemin=listeChemin[sommetPasser][indice]+chemin
+
+        sommetPasser=indice
+
+    print("preprocessingFINI")
+
+
+    pass
+
+
+
+
+def turn (maze_map, maze_width, maze_height, player_location, opponent_location, player_score, opponent_score, pieces_of_cheese, time_allowed) :
+    global chemin
+    return chemin.pop()
